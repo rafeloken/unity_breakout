@@ -10,6 +10,13 @@ public class Ball : MonoBehaviour {
     float maxSpeed = 10f;
     public float currSpeed = 0f;
 
+    Score score;
+
+    void Awake() {
+        score = GameObject.Find("score").GetComponent<Score>() as Score;
+        score.UpdateScore();
+    }
+
 	void Start() {
         GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => { ResetBall(); };
         GameManager.Instance.GameStarted += (object a, EventArgs e) => { rigidbody.AddRelativeForce(new Vector3(0f, minSpeed, 0f)); };
@@ -37,9 +44,15 @@ public class Ball : MonoBehaviour {
         print("hit: " + c.collider.name);
         if(c.gameObject.tag == "Brick") {
             Brick b = c.gameObject.GetComponent<Brick>();
-            print(b.GetBrickValue());
-            Score.AddScore(b.GetBrickValue());            
+            Score.AddScore(b.GetBrickValue());
+            score.UpdateScore();
+        } else if(c.gameObject.tag == "Player") {
+            // Determine direction of ball from paddle, and normalize it(magnitude of 1).
+            Vector3 direction = (gameObject.transform.position - c.gameObject.transform.position).normalized;
+            // Set velocity(direction and speed) of ball according to where it hit on paddle.
+            rigidbody.velocity = direction * currSpeed;
         }
+        // Apply speed multiplier to gradually increase speed of ball over time.
         rigidbody.velocity += rigidbody.velocity * speedMultiplier;
     }
 

@@ -20,6 +20,7 @@ public class Player : MonoBehaviour {
     void Awake() {
         t = transform;
         lives = GameObject.Find("lives").guiText;
+        AdjustLives(0);
     }
 
 	void Start() {        

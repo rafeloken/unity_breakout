@@ -17,11 +17,9 @@ public class GameManager : UnitySingleton<GameManager> {
     public event EventHandler GameRestarted;
 
     Player player;
-    Ball ball;
 
 	protected override void Init() {
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
-        ball = GameObject.FindGameObjectWithTag("Ball").GetComponent<Ball>();
 
         mainFSM = new FiniteStateMachine<State>();        
         mainFSM.AddTransition(State.Initialize, State.MainMenu, null, null, null);

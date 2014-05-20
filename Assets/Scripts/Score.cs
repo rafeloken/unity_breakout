@@ -30,8 +30,7 @@ public class Score : MonoBehaviour {
         GameManager.Instance.SettingUpNewGame += Score.ResetScore;
     }
 
-    // TODO: Change this to not update score every frame regardless of new score!
-    void Update() {
+    public void UpdateScore() {
         guiText.text = "Score: " + currScore.ToString();
     }
 }
