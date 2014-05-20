@@ -1,0 +1,22 @@
+// Unity generated
+Temp/
+obj/
+UnityGenerated/
+Library/
+
+// IDE generated
+ExportedObj/
+*.svd
+*.userprefs
+*.csproj
+*.pidb
+*.suo
+*.sln
+*.user
+*.unityproj
+*.booproj
+
+// OS generated
+._*
+ehthumbs.db
+Thumbs.db
