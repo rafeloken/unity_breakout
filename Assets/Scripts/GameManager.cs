@@ -19,8 +19,6 @@ public class GameManager : UnitySingleton<GameManager> {
     Player player;
 
 	protected override void Init() {
-        player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
-
         mainFSM = new FiniteStateMachine<State>();        
         mainFSM.AddTransition(State.Initialize, State.MainMenu, null, null, null);
         mainFSM.AddTransition(State.MainMenu, State.SetupNewGame, null, InitializeNewGame, OnSettingUpNewGame);
@@ -49,13 +47,8 @@ public class GameManager : UnitySingleton<GameManager> {
 
     // TODO: Determine if this is needed anymore.
     IEnumerator Start() {
-        // Simulate menu selection.
-        yield return new WaitForSeconds(2);
         while(true) {
-            // New Game Selected
-            if(mainFSM.CurrentState == State.MainMenu) {
-                mainFSM.ChangeState(State.SetupNewGame);
-            }
+            
             yield return null;
         }
     }
@@ -82,12 +75,12 @@ public class GameManager : UnitySingleton<GameManager> {
 
 	void Update() {        
         if(mainFSM.CurrentState == State.Restart) {
-            if(Input.GetKeyDown(KeyCode.Return)) {
-                mainFSM.ChangeState(State.SetupNewGame);
-            }
-            if(Input.GetKeyDown(KeyCode.Q)) {
-                mainFSM.ChangeState(State.Quit);
-            }
+            //if(Input.GetKeyDown(KeyCode.Return)) {
+            //    mainFSM.ChangeState(State.SetupNewGame);
+            //}
+            //if(Input.GetKeyDown(KeyCode.Q)) {
+            //    mainFSM.ChangeState(State.Quit);
+            //}
         }
 	}
 
@@ -104,6 +97,8 @@ public class GameManager : UnitySingleton<GameManager> {
     }
 
     void InitializeNewGame() {
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+
         mainFSM.ChangeState(State.Game);
         if(gameFSM.CurrentState != GameState.Playing)
             gameFSM.ChangeState(GameState.Playing);        
