@@ -25,6 +25,7 @@ public class Player : MonoBehaviour {
 
 	void Start() {
         GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => { ResetPlayer(); };
+        GameManager.Instance.NextStage += (object s, EventArgs e) => { ResetPlayer(); };
         GameManager.Instance.PlayerDied += (object s, EventArgs e) => { AdjustLives(-1); };
         GameManager.Instance.PlayerRespawn += (object s, EventArgs e) => { ResetPlayer(false); };
 	}

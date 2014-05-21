@@ -18,6 +18,10 @@ public class LevelBuilder : MonoBehaviour {
         bricks.Remove(brick);
     }
 
+    public bool IsLevelComplete() {
+        return bricks.Count == 0;
+    }
+
     public void GenerateLevel(int rows, int columns) {
         for(int r = 0; r < rows; ++r) {
             for(int c = 0; c < columns; ++c) {

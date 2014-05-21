@@ -14,14 +14,18 @@ public class GameManager : UnitySingleton<GameManager> {
     public event EventHandler StartPlaying;
     public event EventHandler PlayerDied;
     public event EventHandler PlayerRespawn;
+    public event EventHandler NextStage;
     public event EventHandler GameIsOver;
     public event EventHandler BackToMainMenu;
+
+    LevelBuilder levelBuilder;
 
     Player player;
     Score score;
 
     GUIText startMessage;
     GUIText respawnMessage;
+    GUIText nextStageMessage;
     GUIText gameOverMessage;
     GUIText gameOverActionMessage;
 
@@ -41,11 +45,11 @@ public class GameManager : UnitySingleton<GameManager> {
 
         gameFSM = new FiniteStateMachine<GameState>();
         gameFSM.AddTransition(GameState.Idle, GameState.Playing, null, null, OnStartPlaying);
-        gameFSM.AddTransition(GameState.Playing, GameState.NextStage, null, null, null);
+        gameFSM.AddTransition(GameState.Playing, GameState.NextStage, null, null, OnNextStage);
         gameFSM.AddTransition(GameState.Playing, GameState.Dead, null, null, OnPlayerDied);
+        gameFSM.AddTransition(GameState.NextStage, GameState.Idle, PrepareNextStage, null, null);
         gameFSM.AddTransition(GameState.Dead, GameState.Playing, null, null, OnPlayerRespawn);
-        gameFSM.AddTransition(GameState.Dead, GameState.Idle, null, null, null);
-        gameFSM.AddTransition(GameState.NextStage, GameState.Playing, null, null, null);
+        gameFSM.AddTransition(GameState.Dead, GameState.Idle, null, null, null);        
         gameFSM.StateChanged += (object s, EventArgs e) => {
             Debug.Log("state: " + mainFSM.CurrentState.ToString() + " | game state: " + gameFSM.CurrentState.ToString());
         };
@@ -56,6 +60,7 @@ public class GameManager : UnitySingleton<GameManager> {
     IEnumerator Start() {
         while(true) {
             if(mainFSM.CurrentState == State.SetupNewGame && !Application.isLoadingLevel) {
+                levelBuilder = GameObject.FindGameObjectWithTag("Level").GetComponent<LevelBuilder>();
                 player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
                 score = GameObject.Find("score").GetComponent<Score>();
                 Score.ResetScore();
@@ -66,6 +71,8 @@ public class GameManager : UnitySingleton<GameManager> {
                         startMessage = t;
                     } else if(t.name == "respawn message") {
                         respawnMessage = t;
+                    } else if(t.name == "next stage message") {
+                        nextStageMessage = t;
                     } else if(t.name == "gameover message") {
                         gameOverMessage = t;
                     } else if(t.name == "gameover action message") {
@@ -88,16 +95,26 @@ public class GameManager : UnitySingleton<GameManager> {
 
     IEnumerator InitiateGameLoop() {
         while(true) {
-            if(mainFSM.CurrentState == State.GameOver) {
-                DisplayText(gameOverMessage);
-                // Delay allowing restart.
-                yield return new WaitForSeconds(3);
-                DisplayText(gameOverActionMessage);                
-                break;
-            }
-            if(mainFSM.CurrentState == State.Game) {
-                InGame();
-            }
+            switch(mainFSM.CurrentState) {
+                case State.Game:
+                    InGame();
+
+                    if(gameFSM.CurrentState == GameState.NextStage) {
+                        DisplayText(nextStageMessage);
+                        yield return new WaitForSeconds(4);
+                        nextStageMessage.gameObject.SetActive(false);
+                        gameFSM.ChangeState(GameState.Idle);
+                        DisplayText(startMessage);
+                    }
+
+                    break;
+                case State.GameOver:
+                    DisplayText(gameOverMessage);
+                    // Delay allowing restart.
+                    yield return new WaitForSeconds(3);
+                    DisplayText(gameOverActionMessage);
+                    break;
+            }            
             yield return null;
         }
     }
@@ -113,19 +130,23 @@ public class GameManager : UnitySingleton<GameManager> {
             case GameState.Playing:
                 player.UpdatePlayer();
                 break;
+            case GameState.NextStage:                
+                break;
             case GameState.Dead:
                 if(Input.GetButtonDown("Jump")) {
                     respawnMessage.gameObject.SetActive(false);
                     gameFSM.ChangeState(GameState.Playing);
                 }
-                break;
-            case GameState.NextStage:
-                break;
+                break;            
         }
     }
 
     void InitializeNewGame() {
         Application.LoadLevel("game");
+    }
+
+    void PrepareNextStage() {
+        levelBuilder.GenerateLevel(12, 18);
     }
 
     void ReturnToMainMenu() {
@@ -156,6 +177,12 @@ public class GameManager : UnitySingleton<GameManager> {
             startPlaying(this, e);
     }
 
+    void OnNextStage(EventArgs e) {
+        var nextStage = NextStage;
+        if(nextStage != null)
+            nextStage(this, e);
+    }
+
     void OnPlayerDied(EventArgs e) {
         if(player.NumLives > 0) {
             DisplayText(respawnMessage);
@@ -184,6 +211,7 @@ public class GameManager : UnitySingleton<GameManager> {
         SettingUpNewGame = null;
         PlayerDied = null;
         PlayerRespawn = null;
+        NextStage = null;
         StartPlaying = null;
 
         var backToMainMenu = BackToMainMenu;

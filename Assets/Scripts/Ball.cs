@@ -10,16 +10,33 @@ public class Ball : MonoBehaviour {
     float maxSpeed = 10f;
     float currSpeed = 0f;
 
+    MeshRenderer ballMesh;
+
     Score score;
 
     void Awake() {
+        ballMesh = gameObject.GetComponent<MeshRenderer>();
+        HideBall();
+
         score = GameObject.Find("score").GetComponent<Score>() as Score;
         score.UpdateScore();
     }
 
 	void Start() {
-        GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => { ResetBall(); };
-        GameManager.Instance.StartPlaying += (object a, EventArgs e) => { rigidbody.AddRelativeForce(new Vector3(0f, minSpeed, 0f)); };
+        GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => {
+            HideBall();
+            ResetBall();
+        };
+        GameManager.Instance.StartPlaying += (object a, EventArgs e) => {
+            if(!ballMesh.enabled) {
+                ShowBall();
+            }
+            rigidbody.AddRelativeForce(new Vector3(0f, minSpeed, 0f));            
+        };
+        GameManager.Instance.NextStage += (object a, EventArgs e) => {
+            HideBall();
+            ResetBall();            
+        };
         GameManager.Instance.PlayerDied += (object s, EventArgs e) => { FreezeBall(); };
         GameManager.Instance.PlayerRespawn += (object s, EventArgs e) => { 
             ResetBall();
@@ -71,5 +88,13 @@ public class Ball : MonoBehaviour {
         // Start off with no velocity.
         rigidbody.velocity = Vector3.zero;
         currSpeed = 0f;
+    }
+
+    void ShowBall() {
+        ballMesh.enabled = true;
+    }
+
+    void HideBall() {
+        ballMesh.enabled = false;
     }
 }

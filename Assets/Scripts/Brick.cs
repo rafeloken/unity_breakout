@@ -41,6 +41,9 @@ public class Brick : MonoBehaviour {
         if(c.gameObject.name == "ball") {
             levelBuilder.RemoveBrick(gameObject);
             Destroy(gameObject);
+            if(levelBuilder.IsLevelComplete()) {
+                GameManager.Instance.gameFSM.ChangeState(GameManager.GameState.NextStage);
+            }
         }
     }
 }
