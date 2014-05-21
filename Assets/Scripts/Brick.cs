@@ -38,7 +38,6 @@ public class Brick : MonoBehaviour {
     }
 
     void OnCollisionEnter(Collision c) {
-        print("Hit: " + c.gameObject.name);
         if(c.gameObject.name == "ball") {
             levelBuilder.RemoveBrick(gameObject);
             Destroy(gameObject);

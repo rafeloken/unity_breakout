@@ -5,7 +5,7 @@ using System.Collections;
 public class Player : MonoBehaviour {
     float yStartPosition = -4.75f;
     float xBoundary = 7.65f;
-    float speed = 9f;
+    float speed = 10f;
 
     // Cache the transform since we are using it a few times.
     Transform t;
@@ -23,7 +23,7 @@ public class Player : MonoBehaviour {
         AdjustLives(0);
     }
 
-	void Start() {        
+	void Start() {
         GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => { ResetPlayer(); };
         GameManager.Instance.PlayerDied += (object s, EventArgs e) => { AdjustLives(-1); };
         GameManager.Instance.PlayerRespawn += (object s, EventArgs e) => { ResetPlayer(false); };

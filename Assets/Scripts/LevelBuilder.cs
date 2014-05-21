@@ -21,7 +21,6 @@ public class LevelBuilder : MonoBehaviour {
     public void GenerateLevel(int rows, int columns) {
         for(int r = 0; r < rows; ++r) {
             for(int c = 0; c < columns; ++c) {
-                print(brick.name);
                 GameObject tmp = Instantiate(brick, transform.position, Quaternion.identity) as GameObject;
                 tmp.transform.parent = transform;
                 tmp.transform.localPosition = new Vector3(c * .96f, r * -0.25f, 0f);

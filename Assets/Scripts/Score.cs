@@ -22,14 +22,6 @@ public class Score : MonoBehaviour {
         currScore = 0;
     }
 
-    public static void ResetScore(object s, EventArgs e) {
-        currScore = 0;
-    }
-
-    void Awake() {
-        GameManager.Instance.SettingUpNewGame += Score.ResetScore;
-    }
-
     public void UpdateScore() {
         guiText.text = "Score: " + currScore.ToString();
     }

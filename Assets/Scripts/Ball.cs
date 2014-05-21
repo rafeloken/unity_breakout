@@ -8,7 +8,7 @@ public class Ball : MonoBehaviour {
     float speedMultiplier = 1.1f;
     float minSpeed = 5f;
     float maxSpeed = 10f;
-    public float currSpeed = 0f;
+    float currSpeed = 0f;
 
     Score score;
 
@@ -19,7 +19,7 @@ public class Ball : MonoBehaviour {
 
 	void Start() {
         GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => { ResetBall(); };
-        GameManager.Instance.GameStarted += (object a, EventArgs e) => { rigidbody.AddRelativeForce(new Vector3(0f, minSpeed, 0f)); };
+        GameManager.Instance.StartPlaying += (object a, EventArgs e) => { rigidbody.AddRelativeForce(new Vector3(0f, minSpeed, 0f)); };
         GameManager.Instance.PlayerDied += (object s, EventArgs e) => { FreezeBall(); };
         GameManager.Instance.PlayerRespawn += (object s, EventArgs e) => { 
             ResetBall();
@@ -41,7 +41,6 @@ public class Ball : MonoBehaviour {
     }
 
     void OnCollisionEnter(Collision c) {
-        print("hit: " + c.collider.name);
         if(c.gameObject.tag == "Brick") {
             Brick b = c.gameObject.GetComponent<Brick>();
             Score.AddScore(b.GetBrickValue());
