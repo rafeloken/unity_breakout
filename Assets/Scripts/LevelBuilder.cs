@@ -25,9 +25,13 @@ public class LevelBuilder : MonoBehaviour {
     public void GenerateLevel(int rows, int columns) {
         for(int r = 0; r < rows; ++r) {
             for(int c = 0; c < columns; ++c) {
+                // Create brick from prefab.
                 GameObject tmp = Instantiate(brick, transform.position, Quaternion.identity) as GameObject;
+                // Set parent to gameObject.transform so it is nested under it in the hierarchy.
                 tmp.transform.parent = transform;
+                // Set the local position(in relation to parent) according to it's row and column.
                 tmp.transform.localPosition = new Vector3(c * .96f, r * -0.25f, 0f);
+                // Determine which color this brick should be.
                 switch(Random.Range(0, 3)) {
                     case 0:
                         tmp.GetComponent<Brick>().InitBrick(BrickType.Red);

@@ -12,17 +12,25 @@ public class Ball : MonoBehaviour {
 
     MeshRenderer ballMesh;
 
+    AudioClip ballBounce;
+    AudioClip breakBrick;
+    AudioClip ballExplode;
+
     Score score;
 
     void Awake() {
         ballMesh = gameObject.GetComponent<MeshRenderer>();
-        HideBall();
+        HideBall();               
 
         score = GameObject.Find("score").GetComponent<Score>() as Score;
         score.UpdateScore();
     }
 
 	void Start() {
+        ballBounce = Resources.Load<AudioClip>("Audio/ball_bounce");
+        breakBrick = Resources.Load<AudioClip>("Audio/break_brick");
+        ballExplode = Resources.Load<AudioClip>("Audio/die");
+
         GameManager.Instance.SettingUpNewGame += (object s, EventArgs e) => {
             HideBall();
             ResetBall();
@@ -60,13 +68,17 @@ public class Ball : MonoBehaviour {
     void OnCollisionEnter(Collision c) {
         if(c.gameObject.tag == "Brick") {
             Brick b = c.gameObject.GetComponent<Brick>();
+            audio.PlayOneShot(breakBrick);
             Score.AddScore(b.GetBrickValue());
             score.UpdateScore();
         } else if(c.gameObject.tag == "Player") {
+            audio.PlayOneShot(ballBounce);
             // Determine direction of ball from paddle, and normalize it(magnitude of 1).
             Vector3 direction = (gameObject.transform.position - c.gameObject.transform.position).normalized;
             // Set velocity(direction and speed) of ball according to where it hit on paddle.
             rigidbody.velocity = direction * currSpeed;
+        } else {
+            audio.PlayOneShot(ballBounce);
         }
         // Apply speed multiplier to gradually increase speed of ball over time.
         rigidbody.velocity += rigidbody.velocity * speedMultiplier;
@@ -75,6 +87,7 @@ public class Ball : MonoBehaviour {
     void OnTriggerEnter(Collider c) {
         if(c.name == "floor") {
             // TODO: Some sort of explosion effect?
+            audio.PlayOneShot(ballExplode);
             GameManager.Instance.gameFSM.ChangeState(GameManager.GameState.Dead);
         }
     }

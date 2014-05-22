@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 public class GameManager : UnitySingleton<GameManager> {
     public enum State { Initialize, MainMenu, SetupNewGame, Game, GameOver, Quit }
@@ -23,11 +25,16 @@ public class GameManager : UnitySingleton<GameManager> {
     Player player;
     Score score;
 
+    int highScore;
+    GUIText highScoreText;
+
     GUIText startMessage;
     GUIText respawnMessage;
     GUIText nextStageMessage;
     GUIText gameOverMessage;
     GUIText gameOverActionMessage;
+
+    bool isReadyToExit = false;
 
 	protected override void Init() {
         // We want this class to persist through new scenes being loaded.
@@ -37,7 +44,7 @@ public class GameManager : UnitySingleton<GameManager> {
         mainFSM.AddTransition(State.Initialize, State.MainMenu, null, () => Application.LoadLevel("main_menu"), null);
         mainFSM.AddTransition(State.MainMenu, State.SetupNewGame, null, InitializeNewGame, OnSettingUpNewGame);
         mainFSM.AddTransition(State.SetupNewGame, State.Game, null, () => StartCoroutine(InitiateGameLoop()), OnGameStarted);
-        mainFSM.AddTransition(State.Game, State.GameOver, OnGameIsOver);
+        mainFSM.AddTransition(State.Game, State.GameOver, SaveStats, null, OnGameIsOver);
         mainFSM.AddTransition(State.GameOver, State.MainMenu, null, ReturnToMainMenu, OnBackToMainMenu);
         mainFSM.StateChanged += (object s, EventArgs e) => {
             Debug.Log("state: " + mainFSM.CurrentState.ToString() + " | game state: " + gameFSM.CurrentState.ToString());
@@ -60,6 +67,7 @@ public class GameManager : UnitySingleton<GameManager> {
     IEnumerator Start() {
         while(true) {
             if(mainFSM.CurrentState == State.SetupNewGame && !Application.isLoadingLevel) {
+                isReadyToExit = false;                
                 levelBuilder = GameObject.FindGameObjectWithTag("Level").GetComponent<LevelBuilder>();
                 player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
                 score = GameObject.Find("score").GetComponent<Score>();
@@ -67,7 +75,9 @@ public class GameManager : UnitySingleton<GameManager> {
                 score.UpdateScore();
                 GUIText[] texts = GameObject.Find("UI").GetComponentsInChildren<GUIText>(true);
                 foreach(var t in texts) {
-                    if(t.name == "start message") {
+                    if(t.name == "high score") {
+                        highScoreText = t;
+                    } else if(t.name == "start message") {
                         startMessage = t;
                     } else if(t.name == "respawn message") {
                         respawnMessage = t;
@@ -79,14 +89,11 @@ public class GameManager : UnitySingleton<GameManager> {
                         gameOverActionMessage = t;
                     }
                 }
+                LoadStats();
 
                 mainFSM.ChangeState(State.Game);
                 if(gameFSM.CurrentState != GameState.Idle)
                     gameFSM.ChangeState(GameState.Idle);
-            } else if(mainFSM.CurrentState == State.GameOver) {
-                if(Input.GetButtonDown("Exit")) {
-                    mainFSM.ChangeState(State.MainMenu);
-                }
             }
             
             yield return null;
@@ -110,9 +117,17 @@ public class GameManager : UnitySingleton<GameManager> {
                     break;
                 case State.GameOver:
                     DisplayText(gameOverMessage);
-                    // Delay allowing restart.
-                    yield return new WaitForSeconds(3);
-                    DisplayText(gameOverActionMessage);
+                    // If player stats is done saving, delay allowing the exit to main menu.
+                    if(!gameOverActionMessage.gameObject.activeSelf && isReadyToExit) {
+                        yield return new WaitForSeconds(3);
+                        DisplayText(gameOverActionMessage);
+                    }
+                    // Only allow exit after player stats has been saved.
+                    if(isReadyToExit && Input.GetButtonDown("Exit")) {
+                        mainFSM.ChangeState(State.MainMenu);
+                    }
+                    break;
+                default:
                     break;
             }            
             yield return null;
@@ -137,7 +152,9 @@ public class GameManager : UnitySingleton<GameManager> {
                     respawnMessage.gameObject.SetActive(false);
                     gameFSM.ChangeState(GameState.Playing);
                 }
-                break;            
+                break;
+            default:
+                break;
         }
     }
 
@@ -149,12 +166,40 @@ public class GameManager : UnitySingleton<GameManager> {
         levelBuilder.GenerateLevel(12, 18);
     }
 
+    void LoadStats() {
+        if(File.Exists(Application.persistentDataPath + "/playerStats.dat")) {
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Open(Application.persistentDataPath + "/playerStats.dat", FileMode.Open);
+            PlayerStats stats = (PlayerStats)bf.Deserialize(file);
+            file.Close();
+            highScore = stats.highScore;
+            highScoreText.text = "High Score: " + highScore;
+        } else {
+            highScore = 0;
+            highScoreText.text = "High Score: " + highScore;
+        }
+    }
+
+    void SaveStats() {
+        if(Score.CurrentScore > highScore) {
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Open(Application.persistentDataPath + "/playerStats.dat", FileMode.OpenOrCreate);
+            PlayerStats stats = new PlayerStats();
+            // TODO: Announce that player got a new high score.
+            stats.highScore = highScore = Score.CurrentScore;
+            bf.Serialize(file, stats);
+            file.Close();
+        }
+        isReadyToExit = true;
+    }
+
     void ReturnToMainMenu() {
         Application.LoadLevel("main_menu");
     }
 
     void DisplayText(GUIText gt) {
-        gt.gameObject.SetActive(true);
+        if(!gt.gameObject.activeSelf)
+            gt.gameObject.SetActive(true);
     }
 
     void OnSettingUpNewGame(EventArgs e) {
@@ -218,4 +263,10 @@ public class GameManager : UnitySingleton<GameManager> {
         if(backToMainMenu != null)
             backToMainMenu(this, e);
     }
+}
+
+// Simple object used for saving/loading player stats to/from a file.
+[Serializable]
+class PlayerStats {
+    public int highScore;
 }
