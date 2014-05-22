@@ -39,13 +39,21 @@ public abstract class UnitySingleton<T> : MonoBehaviour where T : UnitySingleton
     // This will initialize our instance, if it hasn't already been prompted to do so by
     // another MonoBehavior's Awake() requesting it first.
     void Awake() {
-        Debug.Log("[UnitySingleton] Awake");
         if(instance == null) {
-            Debug.Log("[UnitySingleton] Initializing Singleton in Awake");
+            Debug.Log("[UnitySingleton] Initializing Singleton in Awake.");
             instance = this as T;
             instance.Init();
             if(persist)
                 DontDestroyOnLoad(gameObject);
+        } else if(instance != this) {
+            // This check is to eliminate duplicates that may be created by persisting 
+            // game objects across scenes, but also having said object be in each scene.
+            // An example would be if you have a 'GameManager' and want to be
+            // able to to start the game from any scene, therefore you have an object
+            // with 'GameManager' in each scene.  This will make sure no matter which
+            // scene in the game you start at there will only be the original 'GameManager'.
+            print("[UnitySingleton] Destroying duplicate.");
+            Destroy(gameObject);            
         }
     }
 
