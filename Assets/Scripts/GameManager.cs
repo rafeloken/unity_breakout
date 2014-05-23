@@ -36,6 +36,10 @@ public class GameManager : UnitySingleton<GameManager> {
 
     bool isReadyToExit = false;
 
+    public int HighScore {
+        get { return highScore; }
+    }
+
 	protected override void Init() {
         // We want this class to persist through new scenes being loaded.
         Persist = true;
@@ -44,7 +48,7 @@ public class GameManager : UnitySingleton<GameManager> {
         mainFSM.AddTransition(State.Initialize, State.MainMenu, null, () => Application.LoadLevel("main_menu"), null);
         mainFSM.AddTransition(State.MainMenu, State.SetupNewGame, null, InitializeNewGame, OnSettingUpNewGame);
         mainFSM.AddTransition(State.SetupNewGame, State.Game, null, () => StartCoroutine(InitiateGameLoop()), OnGameStarted);
-        mainFSM.AddTransition(State.Game, State.GameOver, SaveStats, null, OnGameIsOver);
+        mainFSM.AddTransition(State.Game, State.GameOver, null, SaveStats, OnGameIsOver);
         mainFSM.AddTransition(State.GameOver, State.MainMenu, null, ReturnToMainMenu, OnBackToMainMenu);
         mainFSM.StateChanged += (object s, EventArgs e) => {
             Debug.Log("state: " + mainFSM.CurrentState.ToString() + " | game state: " + gameFSM.CurrentState.ToString());
@@ -200,6 +204,10 @@ public class GameManager : UnitySingleton<GameManager> {
     void DisplayText(GUIText gt) {
         if(!gt.gameObject.activeSelf)
             gt.gameObject.SetActive(true);
+    }
+
+    public void UpdateHighScore(int score) {
+        highScoreText.text = "High Score: " + score;
     }
 
     void OnSettingUpNewGame(EventArgs e) {

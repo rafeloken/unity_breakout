@@ -71,6 +71,9 @@ public class Ball : MonoBehaviour {
             audio.PlayOneShot(breakBrick);
             Score.AddScore(b.GetBrickValue());
             score.UpdateScore();
+            if(Score.CurrentScore > GameManager.Instance.HighScore) {
+                GameManager.Instance.UpdateHighScore(Score.CurrentScore);
+            }
         } else if(c.gameObject.tag == "Player") {
             audio.PlayOneShot(ballBounce);
             // Determine direction of ball from paddle, and normalize it(magnitude of 1).
